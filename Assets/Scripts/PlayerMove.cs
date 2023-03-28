@@ -93,7 +93,7 @@ public class PlayerMove : MonoBehaviour
         else
             anim.SetBool("isChange", false);
 
-        if (isStateChanged)
+        if (isStateChanged && !isStopped)
         {
             Client.instance.Move(transform.position.x, transform.position.y, h, v, (int)hKey, (int)vKey);
         }
