@@ -102,6 +102,8 @@ public class Client : MonoBehaviour
 
         Debug.Log("Server Connected!");
         socket.BeginReceive(recvPacket, 0, MAX_BUFFER, SocketFlags.None, new AsyncCallback(OnReceiveCallBack), socket);
+
+        Screen.SetResolution(800, 600, false);
     }
 
     private void Update()
@@ -150,7 +152,6 @@ public class Client : MonoBehaviour
                     {
                         if (playerID == recvData.Players[i].Id)
                         {
-                            playerName = recvData.Players[i].Name;
                             UserManager.instance.EnterMyPlayer(playerID, playerName);
                             continue;
                         }
@@ -201,12 +202,13 @@ public class Client : MonoBehaviour
                     Debug.Log("Recv S_MOVE Packet");
                     Protocol.S_MOVE recvData = Protocol.S_MOVE.Parser.ParseFrom(packet, 4, header.size - 4);
 
-                    UserManager.instance.MovePlayer(recvData.PlayerId, recvData.X, recvData.Y);
+                    UserManager.instance.MovePlayer(recvData.PlayerId, recvData.X, recvData.Y, recvData.MoveInfo);
 
                     break;
                 }
             default:
                 {
+                    Debug.Log("Recv Invalid Packet");
                     break;
                 }
         }
@@ -214,6 +216,7 @@ public class Client : MonoBehaviour
 
     void OnReceiveCallBack(IAsyncResult iAR)
     {
+        if (socket == null) return;
         Socket clientSocket = (Socket)iAR.AsyncState;
         int recvBytes = clientSocket.EndReceive(iAR);
 
@@ -247,6 +250,11 @@ public class Client : MonoBehaviour
         sPacketHeader obj = (sPacketHeader)Marshal.PtrToStructure(ptr, typeof(sPacketHeader));
         Marshal.FreeHGlobal(ptr);
         return obj;
+    }
+
+    public void SetPlayerName(string name)
+    {
+        playerName = name;
     }
 
     public void Login(string name)
@@ -322,13 +330,18 @@ public class Client : MonoBehaviour
         socket.Send(sendBuffer);
     }
 
-    public void Move(float x, float y)
+    public void Move(float x, float y, float h, float v, int hKey, int vKey)
     {
         sPacketHeader header = new sPacketHeader();
         Protocol.C_MOVE tmp = new Protocol.C_MOVE();
         tmp.PlayerId = playerID;
         tmp.X = x;
         tmp.Y = y;
+        tmp.MoveInfo = new Protocol.MoveInfo();
+        tmp.MoveInfo.H = h;
+        tmp.MoveInfo.V = v;
+        tmp.MoveInfo.HKey = (Protocol.KeyState)hKey;
+        tmp.MoveInfo.VKey = (Protocol.KeyState)vKey;
         MemoryStream memoryStream = new MemoryStream();
         tmp.WriteTo(memoryStream);
         header.id = (UInt16)ePKCMD.PKT_C_MOVE;

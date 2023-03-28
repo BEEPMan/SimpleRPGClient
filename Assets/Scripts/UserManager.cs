@@ -27,7 +27,8 @@ public class UserManager : MonoBehaviour
         public string name;
         public PlayerType playerType;
         public GameObject body;
-        public Animator anim;
+        public Protocol.MoveInfo moveInfo;
+        public UserMove move;
     }
 
     public Dictionary<UInt64,sPlayer> playerList;
@@ -46,16 +47,6 @@ public class UserManager : MonoBehaviour
             if (instance != this)
                 Destroy(this.gameObject);
         }
-    }
-
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
     }
 
     public string GetPlayerName(UInt64 playerId)
@@ -79,7 +70,8 @@ public class UserManager : MonoBehaviour
         newPlayer.name = name;
         newPlayer.body = Instantiate(player, new Vector3(x, y, 0), Quaternion.identity);
         newPlayer.body.GetComponentInChildren<TextMeshPro>().text = newPlayer.name;
-        newPlayer.anim = newPlayer.body.GetComponent<Animator>();
+        newPlayer.move = newPlayer.body.GetComponent<UserMove>();
+        newPlayer.move.playerId = playerId;
         playerList.Add(playerId, newPlayer);
         playerCount++;
     }
@@ -90,29 +82,9 @@ public class UserManager : MonoBehaviour
         playerList.Remove(playerId);
     }
 
-    public void MovePlayer(UInt64 playerId, float x, float y)
+    public void MovePlayer(UInt64 playerId, float x, float y, Protocol.MoveInfo info)
     {
-        float deltaX = x - playerList[playerId].body.transform.position.x;
-        float deltaY = y - playerList[playerId].body.transform.position.y;
-
-        if (Math.Abs(deltaX) > Math.Abs(deltaY))
-        {
-            playerList[playerId].anim.SetInteger("vAxisRaw", 0);
-            playerList[playerId].anim.SetBool("isChange", true);
-            if (deltaX > 0)
-                playerList[playerId].anim.SetInteger("hAxisRaw", 1);
-            else
-                playerList[playerId].anim.SetInteger("hAxisRaw", -1);
-        }
-        else if (Math.Abs(deltaX) < Math.Abs(deltaY))
-        {
-            playerList[playerId].anim.SetInteger("hAxisRaw", 0);
-            playerList[playerId].anim.SetBool("isChange", true);
-            if (deltaY > 0)
-                playerList[playerId].anim.SetInteger("vAxisRaw", 1);
-            else
-                playerList[playerId].anim.SetInteger("vAxisRaw", -1);
-        }
+        playerList[playerId].move.SetMoveInfo(info.H, info.V, (int)info.HKey, (int)info.VKey);
 
         playerList[playerId].body.transform.position = new Vector3(x, y, 0);
     }

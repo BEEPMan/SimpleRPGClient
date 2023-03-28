@@ -5,14 +5,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class PlayerMove : MonoBehaviour
+public class UserMove : MonoBehaviour
 {
     public float speed = 10.0f;
 
-    Rigidbody2D rigid;
+    public UInt64 playerId = 0;
+
+    public Rigidbody2D rigid;
     Animator anim;
-    float h;
-    float v;
+
+    public float h;
+    public float v;
+    public bool hDown;
+    public bool vDown;
+    public bool hUp;
+    public bool vUp;
 
     public enum eKeyState : UInt16
     {
@@ -22,12 +29,6 @@ public class PlayerMove : MonoBehaviour
 
     public eKeyState hKey;
     public eKeyState vKey;
-    public bool isStateChanged = false;
-
-    public bool hDown;
-    public bool vDown;
-    public bool hUp;
-    public bool vUp;
 
     public bool isHorizonMove;
     bool isStopped = false;
@@ -43,42 +44,22 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
-        h = Input.GetAxisRaw("Horizontal");
-        v = Input.GetAxisRaw("Vertical");
-
-        hDown = Input.GetButtonDown("Horizontal");
-        vDown = Input.GetButtonDown("Vertical");
-        hUp = Input.GetButtonUp("Horizontal");
-        vUp = Input.GetButtonUp("Vertical");
-
-        isStateChanged = false;
         if (hDown)
         {
-            isStateChanged = true;
-            hKey = eKeyState.KEY_STATE_PRESSED;
-        }
-        else if(hUp)
-        {
-            isStateChanged = true;
-            hKey = eKeyState.KEY_STATE_UNPRESSED;
-        }
-        if (vDown)
-        {
-            isStateChanged = true;
-            vKey = eKeyState.KEY_STATE_PRESSED;
-        }
-        else if (vUp)
-        {
-            isStateChanged = true;
-            vKey = eKeyState.KEY_STATE_UNPRESSED;
-        }
-
-        if (hDown)
             isHorizonMove = true;
+            hDown = false;
+        }
         else if (vDown)
+        {
             isHorizonMove = false;
+            vDown = false;
+        }
         else if (hUp || vUp)
+        {
             isHorizonMove = h != 0;
+            hUp = false;
+            vUp = false;
+        }
 
         if (anim.GetInteger("hAxisRaw") != h)
         {
@@ -92,11 +73,6 @@ public class PlayerMove : MonoBehaviour
         }
         else
             anim.SetBool("isChange", false);
-
-        if (isStateChanged)
-        {
-            Client.instance.Move(transform.position.x, transform.position.y, h, v, (int)hKey, (int)vKey);
-        }
     }
 
     void FixedUpdate()
@@ -116,5 +92,27 @@ public class PlayerMove : MonoBehaviour
     public void ToggleStop()
     {
         isStopped = !isStopped;
+    }
+
+    public void SetMoveInfo(float mH, float mV, int mHKey, int mVKey)
+    {
+        h = mH;
+        v = mV;
+        if(hKey != (eKeyState)mHKey)
+        {
+            if (hKey == eKeyState.KEY_STATE_UNPRESSED)
+                hDown = true;
+            else
+                hUp = true;
+        }
+        if (vKey != (eKeyState)mVKey)
+        {
+            if (vKey == eKeyState.KEY_STATE_UNPRESSED)
+                vDown = true;
+            else
+                vUp = true;
+        }
+        hKey = (eKeyState)mHKey;
+        vKey = (eKeyState)mVKey;
     }
 }

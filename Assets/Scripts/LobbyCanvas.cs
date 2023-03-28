@@ -13,6 +13,7 @@ public class LobbyCanvas : MonoBehaviour
 
     public void LoadMainScene()
     {
+        Client.instance.SetPlayerName(nameInput.text);
         Client.instance.Login(nameInput.text);
         SceneManager.LoadScene("Main");
     }
